@@ -7,7 +7,7 @@
 #
 # MIT license http://www.opensource.org/licenses/mit-license.php
 
-__luaver_VERSION="1.0.0"
+__luaver_VERSION="1.1.0"
 
 # Directories and files to be used
 
@@ -256,7 +256,7 @@ __luaver_get_current_lua_version() {
     else
         version=""
     fi
-    
+
     eval "$1='$version'"
 }
 
@@ -330,6 +330,7 @@ __luaver_usage() {
     __luaver_print_formatted "   luaver unset-default                     Unsets the default lua version"
     __luaver_print_formatted "   luaver uninstall <version>               Uninstalls lua-<version>"
     __luaver_print_formatted "   luaver list                              Lists installed lua versions"
+#   __luaver_print_formatted "   luaver available                         Lists available lua versions"
     __luaver_print_formatted ""
     __luaver_print_formatted "   luaver install-luajit <version>          Installs luajit-<version>"
     __luaver_print_formatted "   luaver use-luajit <version>              Switches to luajit-<version>"
@@ -337,6 +338,8 @@ __luaver_usage() {
     __luaver_print_formatted "   luaver unset-default-luajit              Unsets the default luajit version"
     __luaver_print_formatted "   luaver uninstall-luajit <version>        Uninstalls luajit-<version>"
     __luaver_print_formatted "   luaver list-luajit                       Lists installed luajit versions"
+#   __luaver_print_formatted "   luaver available-luajit                  Lists available luajit versions"
+
     __luaver_print_formatted ""
     __luaver_print_formatted "   luaver install-luarocks <version>        Installs luarocks<version>"
     __luaver_print_formatted "   luaver use-luarocks <version>            Switches to luarocks-<version>"
@@ -344,6 +347,7 @@ __luaver_usage() {
     __luaver_print_formatted "   luaver unset-default-luarocks            Unsets the default luarocks version"
     __luaver_print_formatted "   luaver uninstall-luarocks <version>      Uninstalls luarocks-<version>"
     __luaver_print_formatted "   luaver list-luarocks                     Lists all installed luarocks versions"
+    __luaver_print_formatted "   luaver available-luarocks                Lists available luarocks versions"
     __luaver_print_formatted ""
     __luaver_print_formatted "   luaver current                           Lists present versions being used"
     __luaver_print_formatted "   luaver version                           Displays luaver version"
@@ -381,7 +385,7 @@ __luaver_install_lua() {
         [yY][eE][sS] | [yY] )
             __luaver_use_lua $version
             ;;
-    esac 
+    esac
 }
 
 __luaver_use_lua() {
@@ -454,7 +458,7 @@ __luaver_uninstall_lua() {
 
 __luaver_list_lua() {
     local installed_versions=($(ls $__luaver_LUA_DIR/))
-    
+
     __luaver_get_current_lua_version current_version
 
     if [ ${#installed_versions[@]} -eq 0 ]; then
@@ -464,11 +468,47 @@ __luaver_list_lua() {
         for version in "${installed_versions[@]}"; do
             if [ "${version}" == "${current_version}" ]; then
                 __luaver_print "lua-${version} <--"
-            else 
+            else
                 __luaver_print "lua-${version}"
             fi
         done
     fi
+}
+
+__luaver_html_to_filenames() {
+	grep -o '<a href="download/[Ll]ua[Jj][Ii][Tt][^"]*">' | grep -o '".*"' | sed 's,^[^"]*"\([^"]*\)".*$,\1,g' | while read -r line; do
+		line="${line#*download/}" # LuaJIT-#.#.*.EXT
+		case "${line%%-*}" in
+			(luajit|LuaJIT) ;;
+			(*) continue ;;
+		esac
+		line="${line#*-}"
+		case "$line" in
+			(*'.tar.gz')	line="${line%.tar.gz}";;
+			(*'.zip')	line="${line%.zip}";;
+			*) continue
+		esac
+		printf '%s\n' "$line"
+	done | sort -u | sort -g
+}
+
+__luaver_available_luajit() {
+	local luajit_cachedir=./luajit_index.html
+	local url="http://luajit.org/download.html"
+
+	__luaver_exec_command "cd ${__luaver_SRC_DIR}"
+
+	if [ ! -f "download.html" ]; then
+		__luaver_download "$url"
+#	else
+#		__luaver_print "index already downloaded"
+	fi
+	if [ ! -f "download.html" ]; then
+		__luaver_error "Index not found (No such download.html file)"
+		return 1
+	fi
+	__luaver_print "LuaJIT available :"
+	__luaver_html_to_filenames < download.html
 }
 
 __luaver_install_luajit() {
@@ -744,6 +784,7 @@ luaver() {
         "unset-default-luajit" )    __luaver_unset_default_luajit ${@:2};;
         "uninstall-luajit" )        __luaver_uninstall_luajit ${@:2};;
         "list-luajit" )             __luaver_list_luajit;;
+	"available-luajit")	__luaver_available_luajit;;
 
         "install-luarocks")         __luaver_install_luarocks ${@:2};;
         "use-luarocks" )            __luaver_use_luarocks ${@:2};;
