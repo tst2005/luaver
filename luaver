@@ -37,7 +37,7 @@ __luaver_error() {
 
 # Printing bold text - TODO
 __luaver_print() {
-	if [ ! $__luaver_verbose == 0 ]; then
+	if [ $__luaver_verbose -ne 0 ]; then
 		tput bold
 		printf "==>  $1\n"
 		tput sgr0
@@ -105,29 +105,31 @@ __luaver_init() {
 
 # Checking whether a particular tool exists or not
 __luaver_exists() {
-	if [ "$1" = "lua" ]; then
-		if [[ $(which lua) == ${__luaver_LUA_DIR}* ]]; then
-			return 0
-		else
-			return 1
-		fi
-	fi
-	if [ "$1" = "luajit" ]; then
-		if [[ $(which luajit) == ${__luaver_LUAJIT_DIR}* ]]; then
-			return 0
-		else
-			return 1
-		fi
-	fi
-	if [ "$1" == "luarocks" ]; then
-		if [[ $(which luarocks) == ${__luaver_LUAROCKS_DIR}* ]]; then
-			return 0
-		else
-			return 1
-		fi
-	fi
+	case "$1" in
+		("lua")
+			if [ "$(which lua)" = "${__luaver_LUA_DIR}"* ]; then
+				return 0
+			else
+				return 1
+			fi
+		;;
+		("luajit")
+			if [ "$(which luajit)" = "${__luaver_LUAJIT_DIR}"* ]; then
+				return 0
+			else
+				return 1
+			fi
+		;;
+		("luarocks")
+			if [ "$(which luarocks)" = "${__luaver_LUAROCKS_DIR}"* ]; then
+				return 0
+			else
+				return 1
+			fi
+		;;
+	esac
 
-	type "$1" > /dev/null 2>&1
+	type "$1" >/dev/null 2>&1
 }
 
 # Downloads file from a url
@@ -169,7 +171,7 @@ __luaver_download_and_unpack() {
 	# Checking if archive already downloaded or not
 	if [ -e $unpack_dir_name ]; then
 		read -r -p "${unpack_dir_name} has already been downloaded. Download again? [Y/n]: " choice
-		case $choice in
+		case "$choice" in
 			([yY][eE][sS]|[yY])
 				__luaver_exec_command "rm -r ${unpack_dir_name}"
 			;;
@@ -330,7 +332,7 @@ __luaver_usage() {
 	__luaver_print_formatted "   luaver unset-default                     Unsets the default lua version"
 	__luaver_print_formatted "   luaver uninstall <version>               Uninstalls lua-<version>"
 	__luaver_print_formatted "   luaver list                              Lists installed lua versions"
-#   __luaver_print_formatted "   luaver available                         Lists available lua versions"
+#	__luaver_print_formatted "   luaver available                         Lists available lua versions"	# not yet implemented
 	__luaver_print_formatted ""
 	__luaver_print_formatted "   luaver install-luajit <version>          Installs luajit-<version>"
 	__luaver_print_formatted "   luaver use-luajit <version>              Switches to luajit-<version>"
@@ -338,7 +340,7 @@ __luaver_usage() {
 	__luaver_print_formatted "   luaver unset-default-luajit              Unsets the default luajit version"
 	__luaver_print_formatted "   luaver uninstall-luajit <version>        Uninstalls luajit-<version>"
 	__luaver_print_formatted "   luaver list-luajit                       Lists installed luajit versions"
-#   __luaver_print_formatted "   luaver available-luajit                  Lists available luajit versions"
+#	__luaver_print_formatted "   luaver available-luajit                  Lists available luajit versions"	# not yet implemented
 
 	__luaver_print_formatted ""
 	__luaver_print_formatted "   luaver install-luarocks <version>        Installs luarocks<version>"
@@ -381,10 +383,10 @@ __luaver_install_lua() {
 	__luaver_exec_command "make ${platform} install INSTALL_TOP=${__luaver_LUA_DIR}/${version}"
 
 	read -r -p "${lua_dir_name} successfully installed. Do you want to switch to this version? [Y/n]: " choice
-	case $choice in
-		[yY][eE][sS] | [yY] )
+	case "$choice" in
+		([yY][eE][sS]|[yY])
 			__luaver_use_lua $version
-			;;
+		;;
 	esac
 }
 
@@ -399,7 +401,7 @@ __luaver_use_lua() {
 
 	if [ ! -e $version ]; then
 		read -r -p "${lua_name} is not installed. Do you want to install it? [Y/n]: " choice
-		case $choice in
+		case "$choice" in
 			([yY][eE][sS]|[yY])
 				__luaver_install_lua $version
 			;;
@@ -452,7 +454,7 @@ __luaver_uninstall_lua() {
 
 	__luaver_uninstall $lua_name $__luaver_LUA_DIR $version
 
-	if [ "${version}" == "${current_version}" ]; then
+	if [ "${version}" = "${current_version}" ]; then
 		__luaver_remove_previous_paths "${__luaver_LUA_DIR}"
 	fi
 }
@@ -467,7 +469,7 @@ __luaver_list_lua() {
 	else
 		__luaver_print "Installed versions: "
 		for version in "${installed_versions[@]}"; do
-			if [ "${version}" == "${current_version}" ]; then
+			if [ "${version}" = "${current_version}" ]; then
 				__luaver_print "lua-${version} <--"
 			else
 				__luaver_print "lua-${version}"
@@ -532,10 +534,10 @@ __luaver_install_luajit() {
 	__luaver_exec_command "make install PREFIX=${__luaver_LUAJIT_DIR}/${version}" ;# FIXME quote
 
 	read -r -p "${luajit_dir_name} successfully installed. Do you want to switch to this version? [Y/n]: " choice
-	case $choice in
-		[yY][eE][sS] | [yY] )
+	case "$choice" in
+		([yY][eE][sS]|[yY])
 			__luaver_use_luajit $version
-			;;
+		;;
 	esac
 }
 
@@ -550,7 +552,7 @@ __luaver_use_luajit() {
 
 	if [ ! -e $version ]; then
 		read -r -p "${luajit_name} is not installed. Want to install it? [Y/n]: " choice
-		case $choice in
+		case "$choice" in
 			([yY][eE][sS]|[yY])
 				__luaver_install_lua $version
 			;;
@@ -587,7 +589,7 @@ __luaver_uninstall_luajit() {
 
 	__luaver_uninstall $luajit_name $__luaver_LUAJIT_DIR $version
 
-	if [ "${version}" == "${current_version}" ]; then
+	if [ "${version}" = "${current_version}" ]; then
 		__luaver_remove_previous_paths "${__luaver_LUAJIT_DIR}"
 	fi
 }
@@ -602,7 +604,7 @@ __luaver_list_luajit() {
 	else
 		__luaver_print "Installed versions: "
 		for version in "${installed_versions[@]}"; do
-			if [ "${version}" == "${current_version}" ]; then
+			if [ "${version}" = "${current_version}" ]; then
 				__luaver_print "LuaJIT-${version} <--"
 			else
 				__luaver_print "LuaJIT-${version}"
@@ -614,7 +616,7 @@ __luaver_list_luajit() {
 __luaver_install_luarocks() {
 	# Checking whether any version of lua is installed or not
 	__luaver_get_current_lua_version lua_version
-	if [ "" == "${lua_version}" ]; then
+	if [ -z "${lua_version}" ]; then
 		__luaver_error "No lua version set"
 	fi
 
@@ -647,10 +649,10 @@ __luaver_install_luarocks() {
 	__luaver_exec_command "make install"
 
 	read -r -p "${luarocks_dir_name} successfully installed. Do you want to switch to this version? [Y/n]: " choice
-	case $choice in
-		[yY][eE][sS] | [yY] )
+	case "$choice" in
+		([yY][eE][sS]|[yY])
 			__luaver_use_luarocks $version
-			;;
+		;;
 	esac
 }
 
@@ -660,7 +662,7 @@ __luaver_use_luarocks() {
 
 	__luaver_get_current_lua_version_short lua_version
 
-	if [ "${lua_version}" == "" ]; then
+	if [ -z "${lua_version}" ]; then
 		__luaver_error "You need to first switch to a lua installation"
 	fi
 
@@ -671,7 +673,7 @@ __luaver_use_luarocks() {
 
 	if [ ! -e "${version}_${lua_version}" ]; then
 		read -r -p "${luarocks_name} is not installed with lua version ${lua_version}. Want to install it? [Y/n]: " choice
-		case $choice in
+		case "$choice" in
 			([yY][eE][sS]|[yY])
 				__luaver_install_luarocks $version
 			;;
@@ -714,7 +716,7 @@ __luaver_uninstall_luarocks() {
 
 	__luaver_uninstall $luarocks_name $__luaver_LUAROCKS_DIR "${version}_${lua_version}"
 
-	if [ "${version}" == "${current_version}" ]; then
+	if [ "${version}" = "${current_version}" ]; then
 		__luaver_remove_previous_paths "${__luaver_LUAROCKS_DIR}"
 	fi
 }
@@ -733,7 +735,7 @@ __luaver_list_luarocks() {
 			luarocks_version="${version%_*}"
 			lua_version="${version#*_}"
 
-			if [ "${luarocks_version}" == "${current_luarocks_version}" ] && [ "${lua_version}" == "${current_lua_version}" ]; then
+			if [ "${luarocks_version}" = "${current_luarocks_version}" ] && [ "${lua_version}" = "${current_lua_version}" ]; then
 				__luaver_print "luarocks-${luarocks_version} (lua version: ${lua_version}) <--"
 			else
 				__luaver_print "luarocks-${luarocks_version} (lua version: ${lua_version})"
@@ -749,13 +751,13 @@ __luaver_current() {
 
 	__luaver_print "Current versions:"
 
-	if [ ! "${lua_version}" == "" ]; then
+	if [ -n "${lua_version}" ]; then
 		__luaver_print "lua-${lua_version}"
 	fi
-	if [ ! "${luajit_version}" == "" ]; then
+	if [ -n "${luajit_version}" ]; then
 		__luaver_print "LuaJIT-${luajit_version}"
 	fi
-	if [ ! "${luarocks_version}" == "" ]; then
+	if [ -n "${luarocks_version}" ]; then
 		__luaver_print "luarocks-${luarocks_version}"
 	fi
 }
