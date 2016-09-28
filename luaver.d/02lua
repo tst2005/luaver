@@ -32,17 +32,17 @@ __luaver_install_lua() {
 
 	__luaver_print "Installing ${lua_dir_name}"
 
-	__luaver_exec_command "cd ${__luaver_SRC_DIR}"
+	__luaver_exec_command cd -- "${__luaver_SRC_DIR}"
 
 	__luaver_download_and_unpack $lua_dir_name $archive_name $url
 
 	__luaver_get_platform platform
 
-	__luaver_exec_command "cd ${lua_dir_name}"
+	__luaver_exec_command cd -- "${lua_dir_name}"
 
 	__luaver_print "Compiling ${lua_dir_name}"
 
-	__luaver_exec_command "make ${platform} install INSTALL_TOP=${__luaver_LUA_DIR}/${version}"
+	__luaver_exec_command make "${platform}" install "INSTALL_TOP=${__luaver_LUA_DIR}/${version}"
 
 	read -r -p "${lua_dir_name} successfully installed. Do you want to switch to this version? [Y/n]: " choice
 	case "$choice" in
@@ -59,7 +59,7 @@ __luaver_use_lua() {
 	__luaver_print "Switching to ${lua_name}"
 
 	# Checking if this version exists
-	__luaver_exec_command "cd ${__luaver_LUA_DIR}"
+	__luaver_exec_command cd -- "${__luaver_LUA_DIR}"
 
 	if [ ! -e $version ]; then
 		read -r -p "${lua_name} is not installed. Do you want to install it? [Y/n]: " choice
@@ -99,12 +99,12 @@ __luaver_use_lua() {
 __luaver_set_default_lua() {
 	local version="$1"
 
-	__luaver_exec_command "echo ${version} > ${__luaver_LUA_DEFAULT_FILE}"
+	__luaver_exec_command eval "echo \"${version}\" > \"${__luaver_LUA_DEFAULT_FILE}\""
 	__luaver_print "Default version set for lua: ${version}"
 }
 
 __luaver_unset_default_lua() {
-	__luaver_exec_command "rm ${__luaver_LUA_DEFAULT_FILE}"
+	__luaver_exec_command rm -- "${__luaver_LUA_DEFAULT_FILE}"
 	__luaver_print "Removed default version for lua"
 }
 

@@ -1,6 +1,227 @@
 
-# End of Helper functions
 ###############################################################################
+# Helper functions
+
+# Error handling function
+__luaver_error() {
+	printf "$1\n" 1>&2
+	__luaver_exec_command cd -- "${__luaver_present_dir}"
+	kill -INT $$
+}
+
+# Printing bold text - TODO
+__luaver_print() {
+	if [ $__luaver_verbose -ne 0 ]; then
+		tput bold
+		printf "==>  $1\n"
+		tput sgr0
+	fi
+}
+
+# Printing formatted text
+__luaver_print_formatted() {
+	printf "${1}\n"
+}
+
+# A wrapper function to execute commands on the terminal and exit on error
+# Called whenever the execution should stop after any error occurs
+__luaver_exec_command() {
+	"$@"
+
+	if [ $? -ne 0 ]; then
+		__luaver_error "Unable to execute the following command:\n$1\nExiting"
+	fi
+}
+
+# Perform some initialization
+__luaver_init() {
+	__luaver_present_dir="$(pwd)"
+
+	if [ ! -d "$__luaver_LUAVER_DIR" ]; then
+		__luaver_exec_command mkdir -- "${__luaver_LUAVER_DIR}"
+	fi
+
+	if [ ! -d "$__luaver_SRC_DIR" ]; then
+		__luaver_exec_command mkdir -- "${__luaver_SRC_DIR}"
+	fi
+
+	if [ ! -d "$__luaver_LUA_DIR" ]; then
+		__luaver_exec_command mkdir -- "${__luaver_LUA_DIR}"
+	fi
+
+	if [ ! -d "$__luaver_LUAJIT_DIR" ]; then
+		__luaver_exec_command mkdir -- "${__luaver_LUAJIT_DIR}"
+	fi
+
+	if [ ! -d "$__luaver_LUAROCKS_DIR" ]; then
+		__luaver_exec_command mkdir -- "${__luaver_LUAROCKS_DIR}"
+	fi
+
+	if [ -f "$__luaver_LUA_DEFAULT_FILE" ]; then
+		local lua_version="$(cat -- "$__luaver_LUA_DEFAULT_FILE")"
+		__luaver_use_lua $lua_version
+	fi
+
+	if [ -f "$__luaver_LUAJIT_DEFAULT_FILE" ]; then
+		local luajit_version="$(cat -- "$__luaver_LUAJIT_DEFAULT_FILE")"
+		__luaver_use_luajit $luajit_version
+	fi
+
+	if [ -f "$__luaver_LUAROCKS_DEFAULT_FILE" ]; then
+		local luarocks_version="$(cat -- "$__luaver_LUAROCKS_DEFAULT_FILE")"
+		__luaver_use_luarocks $luarocks_version
+	fi
+
+	__luaver_verbose=1
+
+	__luaver_exec_command cd -- "${__luaver_present_dir}"
+}
+
+# Checking whether a particular tool exists or not
+__luaver_exists() {
+	case "$1" in
+		("lua")
+			if [ "$(which lua)" = "${__luaver_LUA_DIR}/"* ]; then
+				return 0
+			else
+				return 1
+			fi
+		;;
+		("luajit")
+			if [ "$(which luajit)" = "${__luaver_LUAJIT_DIR}/"* ]; then
+				return 0
+			else
+				return 1
+			fi
+		;;
+		("luarocks")
+			if [ "$(which luarocks)" = "${__luaver_LUAROCKS_DIR}/"* ]; then
+				return 0
+			else
+				return 1
+			fi
+		;;
+	esac
+
+	type "$1" >/dev/null 2>&1
+}
+
+# Downloads file from a url
+__luaver_download() {
+	local url="$1"
+
+	__luaver_print "Downloading from ${url}"
+
+	if __luaver_exists "wget"; then
+		__luaver_exec_command wget -- "${url}"
+	else
+		__luaver_error "'wget' must be installed"
+	fi
+
+	__luaver_print "Download successful"
+}
+
+# Unpacks an archive
+__luaver_unpack() {
+	__luaver_print "Unpacking ${1}"
+
+	if __luaver_exists "tar"; then
+		__luaver_exec_command tar -xvzf "${1}"
+	else
+		__luaver_error "'tar' must be installed"
+	fi
+
+	__luaver_print "Unpack successful"
+}
+
+# Downloads and unpacks an archive
+__luaver_download_and_unpack() {
+	local unpack_dir_name="$1"
+	local archive_name="$2"
+	local url="$3"
+
+	__luaver_print "Detecting already downloaded archives"
+
+	# Checking if archive already downloaded or not
+	if [ -e $unpack_dir_name ]; then
+		read -r -p "${unpack_dir_name} has already been downloaded. Download again? [Y/n]: " choice
+		case "$choice" in
+			([yY][eE][sS]|[yY])
+				__luaver_exec_command rm -r -- "${unpack_dir_name}"
+			;;
+		esac
+	fi
+
+	# Downloading the archive only if it does not exist"
+	if [ ! -e $unpack_dir_name ]; then
+		__luaver_print "Downloading ${unpack_dir_name}"
+		__luaver_download $url
+		__luaver_print "Extracting archive"
+		__luaver_unpack $archive_name
+		__luaver_exec_command rm -- "${archive_name}"
+	fi
+}
+
+# Removes existing strings starting with a prefix in PATH
+__luaver_remove_previous_paths() {
+	local prefix="$1"
+
+	local new_path="$(echo "$PATH" | sed \
+		-e "s#${prefix}/[^/]*/bin[^:]*:##g" \
+		-e "s#:${prefix}/[^/]*/bin[^:]*##g" \
+		-e "s#${prefix}/[^/]*/bin[^:]*##g")"
+
+	export PATH="$new_path"
+}
+
+# Append to PATH
+__luaver_append_path() {
+	export PATH="${1}:${PATH}"
+}
+
+# Uninstalls lua/luarocks
+__luaver_uninstall() {
+	local package_name="$1"
+	local package_path="$2"
+	local package_dir="$3"
+
+	__luaver_print "Uninstalling ${package_name}"
+
+	__luaver_exec_command cd -- "${package_path}"
+	if [ ! -e "${package_dir}" ]; then
+		__luaver_error "${package_name} is not installed"
+	fi
+
+	__luaver_exec_command rm -r -- "${package_dir}"
+
+	__luaver_print "Successfully uninstalled ${package_name}"
+}
+
+# Returns the platform
+__luaver_get_platform() {
+	local platform_str="$(uname | tr "[:upper:]" "[:lower:]")"
+	local platforms=("aix" "bsd" "c89" "freebsd" "generic" "linux" "macosx" "mingw" "posix" "solaris")
+
+	__luaver_print "Detecting platform"
+
+	if [[ "${platform_str}" =~ "darwin" ]]; then
+		__luaver_print "Platform detected: macosx"
+		eval "$1='macosx'"
+		return
+	fi
+	for platform in "${platforms[@]}"; do
+		if [[ "${platform_str}" =~ "${platform}" ]]; then
+			__luaver_print "Platform detected: ${platform}"
+			eval "$1='$platform'"
+			return
+		fi
+	done
+
+	# Default platform
+	__luaver_print "Unable to detect platform. Using default 'linux'"
+	eval "$1='linux'"
+}
+
 
 __luaver_usage() {
 #    __luaver_print_formatted ""
@@ -54,7 +275,7 @@ __luaver_current() {
 		__luaver_print "lua-${lua_version}"
 	fi
 	if [ -n "${luajit_version}" ]; then
-		__luaver_print "LuaJIT-${luajit_version}"
+		__luaver_print "luajit-${luajit_version}"
 	fi
 	if [ -n "${luarocks_version}" ]; then
 		__luaver_print "luarocks-${luarocks_version}"
@@ -99,7 +320,7 @@ luaver() {
 		(*)				__luaver_usage;;
 	esac
 
-	__luaver_exec_command "cd ${__luaver_present_dir}"
+	__luaver_exec_command cd -- "${__luaver_present_dir}"
 }
 
 # Init environment

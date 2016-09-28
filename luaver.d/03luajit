@@ -34,7 +34,7 @@ __luaver_available_luajit() {
 	local luajit_cachedir=./luajit_index.html
 	local url="http://luajit.org/download.html"
 
-	__luaver_exec_command "cd ${__luaver_SRC_DIR}"
+	__luaver_exec_command cd -- "${__luaver_SRC_DIR}"
 
 	if [ ! -f "download.html" ]; then
 		__luaver_download "$url"
@@ -57,16 +57,16 @@ __luaver_install_luajit() {
 
 	__luaver_print "Installing ${luajit_dir_name}"
 
-	__luaver_exec_command "cd ${__luaver_SRC_DIR}"
+	__luaver_exec_command cd -- "${__luaver_SRC_DIR}"
 
 	__luaver_download_and_unpack $luajit_dir_name $archive_name $url
 
-	__luaver_exec_command "cd ${luajit_dir_name}"
+	__luaver_exec_command cd -- "${luajit_dir_name}"
 
 	__luaver_print "Compiling ${luajit_dir_name}"
 
-	__luaver_exec_command "make PREFIX=${__luaver_LUAJIT_DIR}/${version}" ;# FIXME quote
-	__luaver_exec_command "make install PREFIX=${__luaver_LUAJIT_DIR}/${version}" ;# FIXME quote
+	__luaver_exec_command make "PREFIX=${__luaver_LUAJIT_DIR}/${version}"
+	__luaver_exec_command make install "PREFIX=${__luaver_LUAJIT_DIR}/${version}"
 
 	read -r -p "${luajit_dir_name} successfully installed. Do you want to switch to this version? [Y/n]: " choice
 	case "$choice" in
@@ -83,7 +83,7 @@ __luaver_use_luajit() {
 	__luaver_print "Switching to ${luajit_name}"
 
 	# Checking if this version exists
-	__luaver_exec_command "cd ${__luaver_LUAJIT_DIR}"
+	__luaver_exec_command cd -- "${__luaver_LUAJIT_DIR}"
 
 	if [ ! -e $version ]; then
 		read -r -p "${luajit_name} is not installed. Want to install it? [Y/n]: " choice
@@ -107,12 +107,12 @@ __luaver_use_luajit() {
 __luaver_set_default_luajit() {
 	local version="$1"
 
-	__luaver_exec_command "echo ${version} > ${__luaver_LUAJIT_DEFAULT_FILE}"
+	__luaver_exec_command eval "echo \"${version}\" > \"${__luaver_LUAJIT_DEFAULT_FILE}\""
 	__luaver_print "Default version set for luajit: ${version}"
 }
 
 __luaver_unset_default_luajit() {
-	__luaver_exec_command "rm ${__luaver_LUAJIT_DEFAULT_FILE}"
+	__luaver_exec_command rm -- "${__luaver_LUAJIT_DEFAULT_FILE}"
 	__luaver_print "Removed default version for LuaJIT"
 }
 
