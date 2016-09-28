@@ -107,21 +107,21 @@ __luaver_init() {
 __luaver_exists() {
 	case "$1" in
 		("lua")
-			if [ "$(which lua)" = "${__luaver_LUA_DIR}"* ]; then
+			if [ "$(which lua)" = "${__luaver_LUA_DIR}/"* ]; then
 				return 0
 			else
 				return 1
 			fi
 		;;
 		("luajit")
-			if [ "$(which luajit)" = "${__luaver_LUAJIT_DIR}"* ]; then
+			if [[ "$(which luajit)" = "${__luaver_LUAJIT_DIR}/"* ]]; then
 				return 0
 			else
 				return 1
 			fi
 		;;
 		("luarocks")
-			if [ "$(which luarocks)" = "${__luaver_LUAROCKS_DIR}"* ]; then
+			if [ "$(which luarocks)" = "${__luaver_LUAROCKS_DIR}/"* ]; then
 				return 0
 			else
 				return 1
@@ -340,7 +340,7 @@ __luaver_usage() {
 	__luaver_print_formatted "   luaver unset-default-luajit              Unsets the default luajit version"
 	__luaver_print_formatted "   luaver uninstall-luajit <version>        Uninstalls luajit-<version>"
 	__luaver_print_formatted "   luaver list-luajit                       Lists installed luajit versions"
-#	__luaver_print_formatted "   luaver available-luajit                  Lists available luajit versions"	# not yet implemented
+	__luaver_print_formatted "   luaver available-luajit                  Lists available luajit versions"
 
 	__luaver_print_formatted ""
 	__luaver_print_formatted "   luaver install-luarocks <version>        Installs luarocks<version>"
@@ -349,7 +349,7 @@ __luaver_usage() {
 	__luaver_print_formatted "   luaver unset-default-luarocks            Unsets the default luarocks version"
 	__luaver_print_formatted "   luaver uninstall-luarocks <version>      Uninstalls luarocks-<version>"
 	__luaver_print_formatted "   luaver list-luarocks                     Lists all installed luarocks versions"
-	__luaver_print_formatted "   luaver available-luarocks                Lists available luarocks versions"
+#	__luaver_print_formatted "   luaver available-luarocks                Lists available luarocks versions"	# not yet implemented
 	__luaver_print_formatted ""
 	__luaver_print_formatted "   luaver current                           Lists present versions being used"
 	__luaver_print_formatted "   luaver version                           Displays luaver version"
