@@ -109,11 +109,16 @@ __luaver_exists() {
 # Downloads file from a url
 __luaver_download() {
 	local url="$1"
+	local tofile="$2"
 
 	__luaver_print "Downloading from ${url}"
 
 	if __luaver_exists "wget"; then
-		__luaver_exec_command wget -- "${url}"
+		if [ -n "$tofile" ]; then
+			__luaver_exec_command wget -q -O "$tofile" -- "${url}"
+		else
+			__luaver_exec_command wget -- "${url}"
+		fi
 	else
 		__luaver_error "'wget' must be installed"
 	fi
@@ -226,15 +231,16 @@ __luaver_html_to_filenames() {
 	local patt="$1";shift;
 	grep -i -o -- "$patt" | grep -o '".*"' | sed 's,^[^"]*"\([^"]*\)".*$,\1,g' \
 	| while read -r line; do
-		line="${line#*download/}" # LuaJIT-#.#.*.EXT
+		line="${line##*/}" # LuaJIT-#.#.*.EXT || lua-#.#.*.EXT
 		case "${line%%-*}" in
 			(luajit|LuaJIT) ;;
+			(lua) ;;
 			(*) continue ;;
 		esac
 		line="${line#*-}"
 		case "$line" in
 			(*'.tar.gz')	line="${line%.tar.gz}";;
-			(*'.zip')	line="${line%.zip}";;
+#			(*'.zip')	line="${line%.zip}";;
 			*) continue
 		esac
 		printf '%s\n' "$line"
@@ -253,7 +259,7 @@ __luaver_usage() {
 	__luaver_print_formatted "   luaver unset-default                     Unsets the default lua version"
 	__luaver_print_formatted "   luaver uninstall <version>               Uninstalls lua-<version>"
 	__luaver_print_formatted "   luaver list                              Lists installed lua versions"
-#	__luaver_print_formatted "   luaver available                         Lists available lua versions"	# not yet implemented
+	__luaver_print_formatted "   luaver available                         Lists available lua versions"	# not yet implemented
 	__luaver_print_formatted ""
 	__luaver_print_formatted "   luaver install-luajit <version>          Installs luajit-<version>"
 	__luaver_print_formatted "   luaver use-luajit <version>              Switches to luajit-<version>"
@@ -269,7 +275,7 @@ __luaver_usage() {
 	__luaver_print_formatted "   luaver unset-default-luarocks            Unsets the default luarocks version"
 	__luaver_print_formatted "   luaver uninstall-luarocks <version>      Uninstalls luarocks-<version>"
 	__luaver_print_formatted "   luaver list-luarocks                     Lists all installed luarocks versions"
-#	__luaver_print_formatted "   luaver available-luarocks                Lists available luarocks versions"	# not yet implemented
+	__luaver_print_formatted "   luaver available-luarocks                Lists available luarocks versions"	# not yet implemented
 	__luaver_print_formatted ""
 	__luaver_print_formatted "   luaver current                           Lists present versions being used"
 	__luaver_print_formatted "   luaver version                           Displays luaver version"
@@ -317,6 +323,7 @@ luaver() {
 		("unset-default")		__luaver_unset_default_lua ${@:2};;
 		("uninstall")			__luaver_uninstall_lua ${@:2};;
 		("list")			__luaver_list_lua;;
+		("available-lua")		__luaver_available_lua;;
 
 		("install-luajit")		__luaver_install_luajit ${@:2};;
 		("use-luajit")			__luaver_use_luajit ${@:2};;
@@ -332,6 +339,7 @@ luaver() {
 		("unset-default-luarocks")	__luaver_unset_default_luarocks ${@:2};;
 		("uninstall-luarocks")		__luaver_uninstall_luarocks ${@:2};;
 		("list-luarocks")		__luaver_list_luarocks;;
+		("available-luarocks")		__luaver_available_luarocks;;
 
 		("current")			__luaver_current;;
 		("version")			__luaver_version;;
