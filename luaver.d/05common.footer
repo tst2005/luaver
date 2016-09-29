@@ -222,6 +222,24 @@ __luaver_get_platform() {
 	eval "$1='linux'"
 }
 
+__luaver_html_to_filenames() {
+	local patt="$1";shift;
+	grep -i -o -- "$patt" | grep -o '".*"' | sed 's,^[^"]*"\([^"]*\)".*$,\1,g' \
+	| while read -r line; do
+		line="${line#*download/}" # LuaJIT-#.#.*.EXT
+		case "${line%%-*}" in
+			(luajit|LuaJIT) ;;
+			(*) continue ;;
+		esac
+		line="${line#*-}"
+		case "$line" in
+			(*'.tar.gz')	line="${line%.tar.gz}";;
+			(*'.zip')	line="${line%.zip}";;
+			*) continue
+		esac
+		printf '%s\n' "$line"
+	done | sort -u | sort -g
+}
 
 __luaver_usage() {
 #    __luaver_print_formatted ""

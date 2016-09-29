@@ -140,3 +140,47 @@ __luaver_list_lua() {
 	fi
 }
 
+__luaver_html_to_filenames() {
+	local patt="$1";shift;
+	grep -i -o -- "$patt" | grep -o '".*"' | sed 's,^[^"]*"\([^"]*\)".*$,\1,g' \
+	| while read -r line; do
+		line="${line#*download/}" # LuaJIT-#.#.*.EXT
+		case "${line%%-*}" in
+			(luajit|LuaJIT) ;;
+			(*) continue ;;
+		esac
+		line="${line#*-}"
+		case "$line" in
+			(*'.tar.gz')	line="${line%.tar.gz}";;
+			(*'.zip')	line="${line%.zip}";;
+			*) continue
+		esac
+		printf '%s\n' "$line"
+	done | sort -u | sort -g
+}
+
+__luaver_html_to_filenames_luajit() {
+	local patt='<a href="download/[Ll]ua[Jj][Ii][Tt][^"]*">'
+	__luaver_html_to_filenames "$patt" "$@"
+}
+
+__luaver_available_luajit() {
+	local luajit_cachedir=./luajit_index.html
+	local url="http://luajit.org/download.html"
+
+	__luaver_exec_command cd -- "${__luaver_SRC_DIR}"
+
+	if [ ! -f "download.html" ]; then
+		__luaver_download "$url"
+#	else
+#		__luaver_print "index already downloaded"
+	fi
+	if [ ! -f "download.html" ]; then
+		__luaver_error "Index not found (No such download.html file)"
+		return 1
+	fi
+	__luaver_print "LuaJIT available :"
+	__luaver_html_to_filenames_luajit < download.html
+}
+
+# <TD CLASS="name"><A HREF="lua-5.3.3.tar.gz">lua-5.3.3.tar.gz</A></TD>
