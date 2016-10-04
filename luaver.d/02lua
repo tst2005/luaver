@@ -2,25 +2,21 @@
 # Returns the current lua version
 __luaver_get_current_lua_version() {
 	local version="$(which lua)"
-
 	if __luaver_exists lua; then
 		version="${version#$__luaver_LUA_DIR/}"
 		version="${version%/bin/lua}"
 	else
 		version=""
 	fi
-
 	eval "$1='$version'"
 }
 
 # Returns the current lua version (only the first two numbers)
 __luaver_get_current_lua_version_short() {
 	local version=""
-
 	if __luaver_exists lua; then
 		version="$(lua -e 'print(_VERSION:sub(5))')"
 	fi
-
 	eval "$1='$version'"
 }
 
@@ -29,21 +25,13 @@ __luaver_install_lua() {
 	local lua_dir_name="lua-${version}"
 	local archive_name="${lua_dir_name}.tar.gz"
 	local url="http://www.lua.org/ftp/${archive_name}"
-
 	__luaver_print "Installing ${lua_dir_name}"
-
 	__luaver_exec_command cd -- "${__luaver_SRC_DIR}"
-
 	__luaver_download_and_unpack $lua_dir_name $archive_name $url
-
 	__luaver_get_platform platform
-
 	__luaver_exec_command cd -- "${lua_dir_name}"
-
 	__luaver_print "Compiling ${lua_dir_name}"
-
 	__luaver_exec_command make "${platform}" install "INSTALL_TOP=${__luaver_LUA_DIR}/${version}"
-
 	read -r -p "${lua_dir_name} successfully installed. Do you want to switch to this version? [Y/n]: " choice
 	case "$choice" in
 		([yY][eE][sS]|[yY])
@@ -55,12 +43,9 @@ __luaver_install_lua() {
 __luaver_use_lua() {
 	local version="$1"
 	local lua_name="lua-${version}"
-
 	__luaver_print "Switching to ${lua_name}"
-
 	# Checking if this version exists
 	__luaver_exec_command cd -- "${__luaver_LUA_DIR}"
-
 	if [ ! -e $version ]; then
 		read -r -p "${lua_name} is not installed. Do you want to install it? [Y/n]: " choice
 		case "$choice" in
@@ -73,23 +58,18 @@ __luaver_use_lua() {
 		esac
 		return
 	fi
-
 	__luaver_remove_previous_paths "${__luaver_LUA_DIR}"
 	__luaver_append_path "${__luaver_LUA_DIR}/${version}/bin"
-
 	__luaver_print "Successfully switched to ${lua_name}"
-
 	# Checking whether luarocks is in use
 	if __luaver_exists "luarocks"; then
 		# Checking if lua version of luarocks is consistent
 		__luaver_get_current_lua_version_short lua_version_1
 		__luaver_get_lua_version_by_current_luarocks lua_version_2
 		__luaver_get_current_luarocks_version luarocks_version
-
 		if [ $lua_version_1 != $lua_version_2 ]; then
 			# Removing earlier version
 			__luaver_remove_previous_paths "${__luaver_LUAROCKS_DIR}"
-
 			__luaver_print "Luarocks in use is inconsistent with this lua version"
 			__luaver_use_luarocks $luarocks_version
 		fi
@@ -98,7 +78,6 @@ __luaver_use_lua() {
 
 __luaver_set_default_lua() {
 	local version="$1"
-
 	__luaver_exec_command eval "echo \"${version}\" > \"${__luaver_LUA_DEFAULT_FILE}\""
 	__luaver_print "Default version set for lua: ${version}"
 }
@@ -111,11 +90,8 @@ __luaver_unset_default_lua() {
 __luaver_uninstall_lua() {
 	local version="$1"
 	local lua_name="lua-${version}"
-
 	__luaver_get_current_lua_version current_version
-
 	__luaver_uninstall $lua_name $__luaver_LUA_DIR $version
-
 	if [ "${version}" = "${current_version}" ]; then
 		__luaver_remove_previous_paths "${__luaver_LUA_DIR}"
 	fi
@@ -123,9 +99,7 @@ __luaver_uninstall_lua() {
 
 __luaver_list_lua() {
 	local installed_versions=($(ls $__luaver_LUA_DIR/))
-
 	__luaver_get_current_lua_version current_version
-
 	if [ ${#installed_versions[@]} -eq 0 ]; then
 		__luaver_print "No version of lua is installed"
 	else
@@ -144,9 +118,7 @@ __luaver_available_lua() {
 	local url="http://www.lua.org/ftp/"
 	local htmlfilename="index_lua.html"
 	local patt='<a href="[Ll]ua[^"]*">'
-
 	__luaver_exec_command cd -- "${__luaver_SRC_DIR}"
-
 	if [ ! -f "$htmlfilename" ]; then
 		__luaver_download "$url" "$htmlfilename"
 #	else
@@ -160,4 +132,3 @@ __luaver_available_lua() {
 	__luaver_html_to_filenames "$patt" < "$htmlfilename"
 }
 
-# <TD CLASS="name"><A HREF="lua-5.3.3.tar.gz">lua-5.3.3.tar.gz</A></TD>

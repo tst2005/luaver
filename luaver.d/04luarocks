@@ -2,7 +2,6 @@
 # Returns the current luarocks version
 __luaver_get_current_luarocks_version() {
 	local version="$(which luarocks)"
-
 	if __luaver_exists "luarocks"; then
 		version="${version#$__luaver_LUAROCKS_DIR/}"
 		version="${version%/bin/luarocks}"
@@ -10,14 +9,12 @@ __luaver_get_current_luarocks_version() {
 	else
 		version=""
 	fi
-
 	eval "$1='$version'"
 }
 
 # Returns the short lua version being supported by present luarocks
 __luaver_get_lua_version_by_current_luarocks() {
 	local version="$(which luarocks)"
-
 	if __luaver_exists "luarocks"; then
 		version="${version#$__luaver_LUAROCKS_DIR/}"
 		version="${version%/bin/luarocks}"
@@ -25,12 +22,8 @@ __luaver_get_lua_version_by_current_luarocks() {
 	else
 		version=""
 	fi
-
 	eval "$1='$version'"
 }
-
-# End of Helper functions
-###############################################################################
 
 __luaver_install_luarocks() {
 	# Checking whether any version of lua is installed or not
@@ -38,24 +31,16 @@ __luaver_install_luarocks() {
 	if [ -z "${lua_version}" ]; then
 		__luaver_error "No lua version set"
 	fi
-
 	__luaver_get_current_lua_version_short lua_version_short
-
 	local version="$1"
 	local luarocks_dir_name="luarocks-${version}"
 	local archive_name="${luarocks_dir_name}.tar.gz"
 	local url="http://luarocks.org/releases/${archive_name}"
-
 	__luaver_print "Installing ${luarocks_dir_name} for lua version ${lua_version}"
-
 	__luaver_exec_command cd -- "${__luaver_SRC_DIR}"
-
 	__luaver_download_and_unpack $luarocks_dir_name $archive_name $url
-
 	__luaver_exec_command cd -- "${luarocks_dir_name}"
-
 	__luaver_print "Compiling ${luarocks_dir_name}"
-
 	__luaver_exec_command ./configure \
 		"--prefix=${__luaver_LUAROCKS_DIR}/${version}_${lua_version_short}" \
 		"--with-lua=${__luaver_LUA_DIR}/${lua_version}" \
@@ -63,10 +48,8 @@ __luaver_install_luarocks() {
 		"--with-lua-include=${__luaver_LUA_DIR}/${lua_version}/include" \
 		"--with-lua-lib=${__luaver_LUA_DIR}/${lua_version}/lib" \
 		"--versioned-rocks-dir"
-
 	__luaver_exec_command make build
 	__luaver_exec_command make install
-
 	read -r -p "${luarocks_dir_name} successfully installed. Do you want to switch to this version? [Y/n]: " choice
 	case "$choice" in
 		([yY][eE][sS]|[yY])
@@ -78,18 +61,13 @@ __luaver_install_luarocks() {
 __luaver_use_luarocks() {
 	local version="$1"
 	local luarocks_name="luarocks-${version}"
-
 	__luaver_get_current_lua_version_short lua_version
-
 	if [ -z "${lua_version}" ]; then
 		__luaver_error "You need to first switch to a lua installation"
 	fi
-
 	__luaver_print "Switching to ${luarocks_name} with lua version: ${lua_version}"
-
 	# Checking if this version exists
 	__luaver_exec_command cd -- "${__luaver_LUAROCKS_DIR}"
-
 	if [ ! -e "${version}_${lua_version}" ]; then
 		read -r -p "${luarocks_name} is not installed with lua version ${lua_version}. Want to install it? [Y/n]: " choice
 		case "$choice" in
@@ -102,19 +80,15 @@ __luaver_use_luarocks() {
 		esac
 		return
 	fi
-
 	__luaver_remove_previous_paths "${__luaver_LUAROCKS_DIR}"
 	__luaver_append_path "${__luaver_LUAROCKS_DIR}/${version}_${lua_version}/bin"
-
 	# Setting up LUA_PATH and LUA_CPATH
 	eval $(luarocks path)
-
 	__luaver_print "Successfully switched to ${luarocks_name}"
 }
 
 __luaver_set_default_luarocks() {
 	local version="$1"
-
 	__luaver_exec_command eval "echo \"${version}\" > \"${__luaver_LUAROCKS_DEFAULT_FILE}\""
 	__luaver_print "Default version set for luarocks: ${version}"
 }
@@ -127,14 +101,10 @@ __luaver_unset_default_luarocks() {
 __luaver_uninstall_luarocks() {
 	local version="$1"
 	local luarocks_name="luarocks-${version}"
-
 	__luaver_get_current_lua_version_short lua_version
 	__luaver_get_current_luarocks_version current_version
-
 	__luaver_print "${luarocks_name} will be uninstalled for lua version ${lua_version}"
-
 	__luaver_uninstall $luarocks_name $__luaver_LUAROCKS_DIR "${version}_${lua_version}"
-
 	if [ "${version}" = "${current_version}" ]; then
 		__luaver_remove_previous_paths "${__luaver_LUAROCKS_DIR}"
 	fi
@@ -142,10 +112,8 @@ __luaver_uninstall_luarocks() {
 
 __luaver_list_luarocks() {
 	local installed_versions=($(ls $__luaver_LUAROCKS_DIR/))
-
 	__luaver_get_current_luarocks_version current_luarocks_version
 	__luaver_get_lua_version_by_current_luarocks current_lua_version
-
 	if [ ${#installed_versions[@]} -eq 0 ]; then
 		__luaver_print "No version of luarocks is installed"
 	else
@@ -153,7 +121,6 @@ __luaver_list_luarocks() {
 		for version in "${installed_versions[@]}"; do
 			luarocks_version="${version%_*}"
 			lua_version="${version#*_}"
-
 			if [ "${luarocks_version}" = "${current_luarocks_version}" ] && [ "${lua_version}" = "${current_lua_version}" ]; then
 				__luaver_print "luarocks-${luarocks_version} (lua version: ${lua_version}) <--"
 			else
@@ -162,4 +129,3 @@ __luaver_list_luarocks() {
 		done
 	fi
 }
-

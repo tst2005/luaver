@@ -27,7 +27,6 @@ __luaver_print_formatted() {
 # Called whenever the execution should stop after any error occurs
 __luaver_exec_command() {
 	"$@"
-
 	if [ $? -ne 0 ]; then
 		__luaver_error "Unable to execute the following command:\n$1\nExiting"
 	fi
@@ -36,44 +35,34 @@ __luaver_exec_command() {
 # Perform some initialization
 __luaver_init() {
 	__luaver_present_dir="$(pwd)"
-
 	if [ ! -d "$__luaver_LUAVER_DIR" ]; then
 		__luaver_exec_command mkdir -- "${__luaver_LUAVER_DIR}"
 	fi
-
 	if [ ! -d "$__luaver_SRC_DIR" ]; then
 		__luaver_exec_command mkdir -- "${__luaver_SRC_DIR}"
 	fi
-
 	if [ ! -d "$__luaver_LUA_DIR" ]; then
 		__luaver_exec_command mkdir -- "${__luaver_LUA_DIR}"
 	fi
-
 	if [ ! -d "$__luaver_LUAJIT_DIR" ]; then
 		__luaver_exec_command mkdir -- "${__luaver_LUAJIT_DIR}"
 	fi
-
 	if [ ! -d "$__luaver_LUAROCKS_DIR" ]; then
 		__luaver_exec_command mkdir -- "${__luaver_LUAROCKS_DIR}"
 	fi
-
 	if [ -f "$__luaver_LUA_DEFAULT_FILE" ]; then
 		local lua_version="$(cat -- "$__luaver_LUA_DEFAULT_FILE")"
 		__luaver_use_lua $lua_version
 	fi
-
 	if [ -f "$__luaver_LUAJIT_DEFAULT_FILE" ]; then
 		local luajit_version="$(cat -- "$__luaver_LUAJIT_DEFAULT_FILE")"
 		__luaver_use_luajit $luajit_version
 	fi
-
 	if [ -f "$__luaver_LUAROCKS_DEFAULT_FILE" ]; then
 		local luarocks_version="$(cat -- "$__luaver_LUAROCKS_DEFAULT_FILE")"
 		__luaver_use_luarocks $luarocks_version
 	fi
-
 	__luaver_verbose=1
-
 	__luaver_exec_command cd -- "${__luaver_present_dir}"
 }
 
@@ -110,9 +99,7 @@ __luaver_exists() {
 __luaver_download() {
 	local url="$1"
 	local tofile="$2"
-
 	__luaver_print "Downloading from ${url}"
-
 	if __luaver_exists "wget"; then
 		if [ -n "$tofile" ]; then
 			__luaver_exec_command wget -q -O "$tofile" -- "${url}"
@@ -122,20 +109,17 @@ __luaver_download() {
 	else
 		__luaver_error "'wget' must be installed"
 	fi
-
 	__luaver_print "Download successful"
 }
 
 # Unpacks an archive
 __luaver_unpack() {
 	__luaver_print "Unpacking ${1}"
-
 	if __luaver_exists "tar"; then
 		__luaver_exec_command tar -xvzf "${1}"
 	else
 		__luaver_error "'tar' must be installed"
 	fi
-
 	__luaver_print "Unpack successful"
 }
 
@@ -144,9 +128,7 @@ __luaver_download_and_unpack() {
 	local unpack_dir_name="$1"
 	local archive_name="$2"
 	local url="$3"
-
 	__luaver_print "Detecting already downloaded archives"
-
 	# Checking if archive already downloaded or not
 	if [ -e $unpack_dir_name ]; then
 		read -r -p "${unpack_dir_name} has already been downloaded. Download again? [Y/n]: " choice
@@ -156,7 +138,6 @@ __luaver_download_and_unpack() {
 			;;
 		esac
 	fi
-
 	# Downloading the archive only if it does not exist"
 	if [ ! -e $unpack_dir_name ]; then
 		__luaver_print "Downloading ${unpack_dir_name}"
@@ -170,12 +151,10 @@ __luaver_download_and_unpack() {
 # Removes existing strings starting with a prefix in PATH
 __luaver_remove_previous_paths() {
 	local prefix="$1"
-
 	local new_path="$(echo "$PATH" | sed \
 		-e "s#${prefix}/[^/]*/bin[^:]*:##g" \
 		-e "s#:${prefix}/[^/]*/bin[^:]*##g" \
 		-e "s#${prefix}/[^/]*/bin[^:]*##g")"
-
 	export PATH="$new_path"
 }
 
@@ -189,16 +168,12 @@ __luaver_uninstall() {
 	local package_name="$1"
 	local package_path="$2"
 	local package_dir="$3"
-
 	__luaver_print "Uninstalling ${package_name}"
-
 	__luaver_exec_command cd -- "${package_path}"
 	if [ ! -e "${package_dir}" ]; then
 		__luaver_error "${package_name} is not installed"
 	fi
-
 	__luaver_exec_command rm -r -- "${package_dir}"
-
 	__luaver_print "Successfully uninstalled ${package_name}"
 }
 
@@ -206,9 +181,7 @@ __luaver_uninstall() {
 __luaver_get_platform() {
 	local platform_str="$(uname | tr "[:upper:]" "[:lower:]")"
 	local platforms=("aix" "bsd" "c89" "freebsd" "generic" "linux" "macosx" "mingw" "posix" "solaris")
-
 	__luaver_print "Detecting platform"
-
 	if [[ "${platform_str}" =~ "darwin" ]]; then
 		__luaver_print "Platform detected: macosx"
 		eval "$1='macosx'"
@@ -221,7 +194,6 @@ __luaver_get_platform() {
 			return
 		fi
 	done
-
 	# Default platform
 	__luaver_print "Unable to detect platform. Using default 'linux'"
 	eval "$1='linux'"
@@ -300,9 +272,7 @@ __luaver_current() {
 	__luaver_get_current_lua_version lua_version
 	__luaver_get_current_luajit_version luajit_version
 	__luaver_get_current_luarocks_version luarocks_version
-
 	__luaver_print "Current versions:"
-
 	if [ -n "${lua_version}" ]; then
 		__luaver_print "lua-${lua_version}"
 	fi
@@ -324,7 +294,6 @@ luaver() {
 	local cmd="$1";shift;
 	case "$cmd" in
 		("help")			__luaver_usage				;;
-
 		("install"|use|set-default|unset-default|uninstall|list|available)
 			local nameversion="$1";shift;
 			local name=''
@@ -349,7 +318,6 @@ luaver() {
 			esac
 			"__luaver_${cmd}_${name}" "$version" "$@"
 		;;
-
 		("install-lua")			__luaver_install_lua		"$@"	;;
 		("use-lua")			__luaver_use_lua		"$@"	;;
 		("set-default-lua")		__luaver_set_default_lua	"$@"	;;
@@ -357,7 +325,7 @@ luaver() {
 		("uninstall-lua")		__luaver_uninstall_lua		"$@"	;;
 		("list-lua")			__luaver_list_lua			;;
 		("available-lua")		__luaver_available_lua			;;
-
+#
 		("install-luajit")		__luaver_install_luajit		"$@"	;;
 		("use-luajit")			__luaver_use_luajit		"$@"	;;
 		("set-default-luajit")		__luaver_set_default_luajit	"$@"	;;
@@ -365,7 +333,7 @@ luaver() {
 		("uninstall-luajit")		__luaver_uninstall_luajit	"$@"	;;
 		("list-luajit")			__luaver_list_luajit			;;
 		("available-luajit")		__luaver_available_luajit		;;
-
+#
 		("install-luarocks")		__luaver_install_luarocks	"$@"	;;
 		("use-luarocks")		__luaver_use_luarocks		"$@"	;;
 		("set-default-luarocks")	__luaver_set_default_luarocks	"$@"	;;
@@ -373,12 +341,11 @@ luaver() {
 		("uninstall-luarocks")		__luaver_uninstall_luarocks	"$@"	;;
 		("list-luarocks")		__luaver_list_luarocks			;;
 		("available-luarocks")		__luaver_available_luarocks		;;
-
+#
 		("current")			__luaver_current			;;
 		("version")			__luaver_version			;;
 		(*)				__luaver_usage				;;
 	esac
-
 	__luaver_exec_command cd -- "${__luaver_present_dir}"
 }
 
@@ -388,5 +355,4 @@ __luaver_init
 # keep only the filename (/path/to/file.name => file.name)
 case "${0##*/}" in
 	('luaver'|'luaver'.*) luaver "$@" ;;
-esac                                                                                                                                                                                             
-
+esac
