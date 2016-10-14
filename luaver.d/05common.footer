@@ -166,7 +166,7 @@ __luaver_download_and_unpack() {
 }
 
 # Uninstalls lua/luarocks
-__luaver_uninstall() {
+__luaver_x_uninstall() {
 	local package_name="$1"
 	local package_path="$2"
 	local package_dir="$3"
@@ -222,51 +222,25 @@ __luaver_html_to_filenames() {
 }
 
 __luaver_usage() {
-#    __luaver_print_formatted ""
-#    __luaver_version
 	__luaver_print_formatted "Usage:"
-	__luaver_print_formatted "   luaver help                              Displays this message"
+	__luaver_print_formatted "   luaver help                                 Displays this message"
+	__luaver_print_formatted "   luaver version                              Displays luaver version"
 	__luaver_print_formatted ""
-	__luaver_print_formatted "   luaver install       <name>=<version>    Installs lua-<version>"
-	__luaver_print_formatted "   luaver use           <name>=<version>    Switches to lua-<version>"
-	__luaver_print_formatted "   luaver set-default   <name>=<version>    Sets <version> as default for lua"
-	__luaver_print_formatted "   luaver unset-default                     Unsets the default lua version"
-	__luaver_print_formatted "   luaver uninstall     <name>=<version>    Uninstalls lua-<version>"
-	__luaver_print_formatted "   luaver list          <name>              Lists installed lua versions"
-	__luaver_print_formatted "   luaver available     <name>              Lists available lua versions"
+	__luaver_print_formatted "   luaver install       <product>=<version>    Installs <product>-<version>"
+	__luaver_print_formatted "   luaver use           <product>=<version>    Switches to <product>-<version>"
+	__luaver_print_formatted "   luaver set-default   <product>=<version>    Sets <version> as default for <product>"
+	__luaver_print_formatted "   luaver unset-default <product>              Unsets the default <product> version"
+	__luaver_print_formatted "   luaver uninstall     <product>=<version>    Uninstalls <name>-<version>"
+	__luaver_print_formatted "   luaver list          <product>              Lists installed product versions"
+	__luaver_print_formatted "   luaver available     <product>              Lists available product versions"
 	__luaver_print_formatted ""
-	__luaver_print_formatted "   luaver install-lua          <version>    Installs lua-<version>"
-	__luaver_print_formatted "   luaver use-lua              <version>    Switches to lua-<version>"
-	__luaver_print_formatted "   luaver set-default-lua      <version>    Sets <version> as default for lua"
-	__luaver_print_formatted "   luaver unset-default-lua                 Unsets the default lua version"
-	__luaver_print_formatted "   luaver uninstall-lua        <version>    Uninstalls lua-<version>"
-	__luaver_print_formatted "   luaver list-lua                          Lists installed lua versions"
-	__luaver_print_formatted "   luaver available-lua                     Lists available lua versions"
-	__luaver_print_formatted ""
-	__luaver_print_formatted "   luaver install-luajit       <version>    Installs luajit-<version>"
-	__luaver_print_formatted "   luaver use-luajit           <version>    Switches to luajit-<version>"
-	__luaver_print_formatted "   luaver set-default-luajit   <version>    Sets <version> as default for luajit"
-	__luaver_print_formatted "   luaver unset-default-luajit              Unsets the default luajit version"
-	__luaver_print_formatted "   luaver uninstall-luajit     <version>    Uninstalls luajit-<version>"
-	__luaver_print_formatted "   luaver list-luajit                       Lists installed luajit versions"
-	__luaver_print_formatted "   luaver available-luajit                  Lists available luajit versions"
-	__luaver_print_formatted ""
-	__luaver_print_formatted "   luaver install-luarocks     <version>    Installs luarocks<version>"
-	__luaver_print_formatted "   luaver use-luarocks         <version>    Switches to luarocks-<version>"
-	__luaver_print_formatted "   luaver set-default-luarocks <version>    Sets <version> as default for luarocks"
-	__luaver_print_formatted "   luaver unset-default-luarocks            Unsets the default luarocks version"
-	__luaver_print_formatted "   luaver uninstall-luarocks   <version>    Uninstalls luarocks-<version>"
-	__luaver_print_formatted "   luaver list-luarocks                     Lists all installed luarocks versions"
-	__luaver_print_formatted "   luaver available-luarocks                Lists available luarocks versions"	# not yet implemented
-	__luaver_print_formatted ""
-	__luaver_print_formatted "   luaver current                           Lists present versions being used"
-	__luaver_print_formatted "   luaver version                           Displays luaver version"
+	__luaver_print_formatted "   luaver current|list                         Lists present versions being used"
 	__luaver_print_formatted ""
 	__luaver_print_formatted "Examples:"
 	__luaver_print_formatted "   luaver install lua=5.3.1                 # Installs lua version 5.3.1"
 	__luaver_print_formatted "   luaver install lua=5.3.0                 # Installs lua version 5.3.0"
-	__luaver_print_formatted "   luaver use lua=5.3.1                     # Switches to lua version 5.3.1"
-	__luaver_print_formatted "   luaver install-luarocks 2.3.0            # Installs luarocks version 2.3.0"
+	__luaver_print_formatted "   luaver use     lua=5.3.1                 # Switches to lua version 5.3.1"
+	__luaver_print_formatted "   luaver install luarocks=2.3.0            # Installs luarocks version 2.3.0"
 	__luaver_print_formatted "   luaver uninstall lua=5.3.0               # Uninstalls lua version 5.3.0"
 }
 
@@ -289,28 +263,38 @@ __luaver_current() {
 __luaver_version() {
 	__luaver_print_formatted "Lua Version Manager ${__luaver_VERSION}\n"
 	__luaver_print_formatted "Developed by Dhaval Kapil <me@dhavalkapil.com>\n"
+	__luaver_print_formatted "          by TsT          <tst2005@gmail.com>\n"
 }
 
 luaver() {
 	__luaver_present_dir="$(pwd)"
 	local cmd="$1";shift;
 	case "$cmd" in
-		("help")			__luaver_usage				;;
+		("help") __luaver_usage; return 0 ;;
+		("list")
+			if [ $# -eq 0 ]; then
+				__luaver_current
+				return $?
+			fi
+		;;
+	esac
+		
+	case "$cmd" in
 		("install"|use|set-default|unset-default|uninstall|list|available)
-			local nameversion="$1";shift;
-			local name=''
+			local productversion="$1";shift;
+			local product=''
 			local version=''
-			case "$nameversion" in
+			case "$productversion" in
 				(?*'='?*)
-					name="${nameversion%%=*}"
+					product="${nameversion%%=*}"
 					version="${nameversion#*=}"
 				;;
 				(?*'-'?*'.'?*)
-					name="${nameversion%%-*}"
+					product="${nameversion%%-*}"
 					version="${nameversion#*-}"
 				;;
 				(*)
-					name="${nameversion}"
+					product="${nameversion}"
 					version=''
 				;;
 			esac
@@ -318,35 +302,11 @@ luaver() {
 				("set-default")		cmd="set_default"	;;
 				("unset-default")	cmd="unset_default"	;;
 			esac
-			"__luaver_${cmd}_${name}" "$version" "$@"
+			"__luaver_${cmd}" "${product}" "$version" "$@"
 		;;
-		("install-lua")			__luaver_install_lua		"$@"	;;
-		("use-lua")			__luaver_use_lua		"$@"	;;
-		("set-default-lua")		__luaver_set_default_lua	"$@"	;;
-		("unset-default-lua")		__luaver_unset_default_lua	"$@"	;;
-		("uninstall-lua")		__luaver_uninstall_lua		"$@"	;;
-		("list-lua")			__luaver_list_lua			;;
-		("available-lua")		__luaver_available_lua			;;
-#
-		("install-luajit")		__luaver_install_luajit		"$@"	;;
-		("use-luajit")			__luaver_use_luajit		"$@"	;;
-		("set-default-luajit")		__luaver_set_default_luajit	"$@"	;;
-		("unset-default-luajit")	__luaver_unset_default_luajit	"$@"	;;
-		("uninstall-luajit")		__luaver_uninstall_luajit	"$@"	;;
-		("list-luajit")			__luaver_list_luajit			;;
-		("available-luajit")		__luaver_available_luajit		;;
-#
-		("install-luarocks")		__luaver_install_luarocks	"$@"	;;
-		("use-luarocks")		__luaver_use_luarocks		"$@"	;;
-		("set-default-luarocks")	__luaver_set_default_luarocks	"$@"	;;
-		("unset-default-luarocks")	__luaver_unset_default_luarocks	"$@"	;;
-		("uninstall-luarocks")		__luaver_uninstall_luarocks	"$@"	;;
-		("list-luarocks")		__luaver_list_luarocks			;;
-		("available-luarocks")		__luaver_available_luarocks		;;
-#
 		("current")			__luaver_current			;;
 		("version")			__luaver_version			;;
-		(*)				__luaver_usage				;;
+		(*)				__luaver_usage; return 1		;;
 	esac
 	__luaver_exec_command cd -- "${__luaver_present_dir}"
 }
