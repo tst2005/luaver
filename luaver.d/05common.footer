@@ -2,6 +2,23 @@
 ###############################################################################
 # Helper functions
 
+
+# Removes existing strings starting with a prefix in PATH
+__luaver_remove_previous_paths() {
+	local prefix="$1"
+	local new_path="$(echo "$PATH" | sed \
+		-e "s#${prefix}/[^/]*/bin[^:]*:##g" \
+		-e "s#:${prefix}/[^/]*/bin[^:]*##g" \
+		-e "s#${prefix}/[^/]*/bin[^:]*##g")"
+	export PATH="$new_path"
+}
+
+# Append to PATH
+__luaver_append_path() {
+	export PATH="${1}:${PATH}"
+}
+
+
 # Error handling function
 __luaver_error() {
 	printf "$1\n" 1>&2
@@ -146,21 +163,6 @@ __luaver_download_and_unpack() {
 		__luaver_unpack $archive_name
 		__luaver_exec_command rm -- "${archive_name}"
 	fi
-}
-
-# Removes existing strings starting with a prefix in PATH
-__luaver_remove_previous_paths() {
-	local prefix="$1"
-	local new_path="$(echo "$PATH" | sed \
-		-e "s#${prefix}/[^/]*/bin[^:]*:##g" \
-		-e "s#:${prefix}/[^/]*/bin[^:]*##g" \
-		-e "s#${prefix}/[^/]*/bin[^:]*##g")"
-	export PATH="$new_path"
-}
-
-# Append to PATH
-__luaver_append_path() {
-	export PATH="${1}:${PATH}"
 }
 
 # Uninstalls lua/luarocks
