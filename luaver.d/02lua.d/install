@@ -10,10 +10,11 @@ __luaver_install_lua() {
 	__luaver_exec_command cd -- "${lua_dir_name}"
 	__luaver_print "Compiling ${lua_dir_name}"
 	__luaver_exec_command make "${platform}" install "INSTALL_TOP=${__luaver_LUA_DIR}/${version}"
-	read -r -p "${lua_dir_name} successfully installed. Do you want to switch to this version? [Y/n]: " choice
-	case "$choice" in
-		([yY][eE][sS]|[yY])
-			__luaver_use_lua $version
-		;;
-	esac
+	echo >&2 "${lua_dir_name} successfully installed."
+#	read -r -p "${lua_dir_name} successfully installed. Do you want to switch to this version? [Y/n]: " choice
+#	case "$choice" in
+#		([yY][eE][sS]|[yY])
+#			__luaver_use_lua $version
+#		;;
+#	esac
 }
