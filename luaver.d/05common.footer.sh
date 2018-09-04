@@ -222,6 +222,7 @@ __luaver_html_to_filenames() {
 		case "${line%%-*}" in
 			(luajit|LuaJIT) ;;
 			(lua) ;;
+			(luarocks) ;;
 			(*)
 				echo >&2 "__luaver_html_to_filenames: continue after ${line%%-*}"
 				continue ;;

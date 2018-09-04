@@ -11,7 +11,7 @@ __luaver_available_lua() {
 		__luaver_error "Index not found (No such $htmlfilename file)"
 		return 1
 	fi
-	__luaver_print "Lua available :"
+	__luaver_print >&2 "Lua available :"
 	local pattern='<TD CLASS="name"><A HREF="lua-[0-9].*\.tar\.gz">.*</A></TD>'
-	__luaver_html_to_filenames "$pattern" '"lua-[0-9].*.tar.gz"' < "$htmlfilename"
+	__luaver_html_to_filenames "$pattern" '"lua-[0-9].*\.tar\.gz"' < "$htmlfilename"
 }

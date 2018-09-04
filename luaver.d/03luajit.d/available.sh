@@ -11,6 +11,6 @@ __luaver_available_luajit() {
 		__luaver_error "Index not found (No such $htmlfilename file)"
 		return 1
 	fi
-	__luaver_print "LuaJIT available :"
+	__luaver_print >&2 "LuaJIT available :"
 	__luaver_html_to_filenames '<a href="download/[Ll]ua[Jj][Ii][Tt][^"]*">' '".*"' < "$htmlfilename"
 }
