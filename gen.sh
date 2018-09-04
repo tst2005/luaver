@@ -3,7 +3,7 @@
 cd -- "$(dirname "$0")"
 
 (
-for f in $(find luaver.d/ -type f | sort ); do
+for f in $(find luaver.d/ -type f -name '*.sh' | sort ); do
 	cat "$f"
 done
 ) > luaver.new2
