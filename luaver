@@ -41,9 +41,9 @@ __luaver_getdir() {
 		tmp)
 			printf '%s/%s/%s\n'	"$__luaver_LUAVER_DIR" "tmp" "$product"
 		;;
-		default)
-			printf '%s/%s_%s_%s\n'	"$__luaver_LUAVER_DIR" "default" "$product" "${1:-DEFAULT}"
-		;;
+#		default)
+#			printf '%s/%s_%s_%s\n'	"$__luaver_LUAVER_DIR" "default" "$product" "${1:-DEFAULT}"
+#		;;
 		inst)
 			local version="${1:-unknown}";shift
 			printf '%s/%s/%s/%s\n'	"$__luaver_LUAVER_DIR" "inst" "$product" "$version"
@@ -71,9 +71,9 @@ __luaver_LUA_DIR="$(     __luaver_getdir inst lua      .)"                 # Lua
 __luaver_LUAJIT_DIR="$(  __luaver_getdir inst luajit   .)"                 # Luajit   product is installed
 __luaver_LUAROCKS_DIR="$(__luaver_getdir inst luarocks .)"                 # Luarocks product is installed
 
-__luaver_LUA_DEFAULT_FILE="$(     __luaver_getdir default lua     )"       # Lua      default used version
-__luaver_LUAJIT_DEFAULT_FILE="$(  __luaver_getdir default luajit  )"       # Luajit   default used version
-__luaver_LUAROCKS_DEFAULT_FILE="$(__luaver_getdir default luarocks)"       # Luarocks default used version
+#__luaver_LUA_DEFAULT_FILE="$(     __luaver_getdir default lua     )"       # Lua      default used version
+#__luaver_LUAJIT_DEFAULT_FILE="$(  __luaver_getdir default luajit  )"       # Luajit   default used version
+#__luaver_LUAROCKS_DEFAULT_FILE="$(__luaver_getdir default luarocks)"       # Luarocks default used version
 
 
 # .luaver/
@@ -108,20 +108,9 @@ __luaver_list() {
 	local product="$1";shift;
 	"__luaver_list_$product" "$@";
 }
-__luaver_set_default() {
-	local product="$1";shift
-	local version="$1"
-	__luaver_exec_command eval "echo \"${version}\" > \"$(__luaver_getdir default "$product")\""
-	__luaver_print "Default version set for ${product}: ${version}"
-}
 __luaver_uninstall() {
 	local product="$1";shift;
 	"__luaver_uninstall_$product" "$@";
-}
-__luaver_unset_default() {
-	local product="$1";shift;
-	__luaver_exec_command rm -- "$(__luaver_getdir default "$product")"
-	__luaver_print "Removed default version for ${product}"
 }
 __luaver_use() {
 	local product="$1";shift;
@@ -177,9 +166,9 @@ __luaver_available_lua() {
 		__luaver_error "Index not found (No such $htmlfilename file)"
 		return 1
 	fi
-	__luaver_print "Lua available :"
+	__luaver_print >&2 "Lua available :"
 	local pattern='<TD CLASS="name"><A HREF="lua-[0-9].*\.tar\.gz">.*</A></TD>'
-	__luaver_html_to_filenames "$pattern" '"lua-[0-9].*.tar.gz"' < "$htmlfilename"
+	__luaver_html_to_filenames "$pattern" '"lua-[0-9].*\.tar\.gz"' < "$htmlfilename"
 }
 
 # Returns the current lua version
@@ -239,11 +228,6 @@ __luaver_list_lua() {
 		done
 	fi
 }
-__luaver_set_default_lua() {
-	local version="$1"
-	__luaver_exec_command eval "echo \"${version}\" > \"${__luaver_LUA_DEFAULT_FILE}\""
-	__luaver_print "Default version set for lua: ${version}"
-}
 __luaver_uninstall_lua() {
 	local version="$1"
 	local lua_name="lua-${version}"
@@ -252,13 +236,6 @@ __luaver_uninstall_lua() {
 	if [ "${version}" = "${current_version}" ]; then
 		__luaver_remove_previous_paths "${__luaver_LUA_DIR}"
 	fi
-}
-__luaver_unset_default_lua() {
-	__luaver_exec_command rm -- "${__luaver_LUA_DEFAULT_FILE}"
-	__luaver_print "Removed default version for lua"
-}
-__luaver_unset_default_lua() {
-	__luaver_unset_default lua "$@";
 }
 __luaver_use_lua() {
 	local version="$1"
@@ -308,7 +285,7 @@ __luaver_available_luajit() {
 		__luaver_error "Index not found (No such $htmlfilename file)"
 		return 1
 	fi
-	__luaver_print "LuaJIT available :"
+	__luaver_print >&2 "LuaJIT available :"
 	__luaver_html_to_filenames '<a href="download/[Ll]ua[Jj][Ii][Tt][^"]*">' '".*"' < "$htmlfilename"
 }
 # Returns the current luajit version
@@ -373,11 +350,6 @@ __luaver_list_luajit() {
 		done
 	fi
 }
-__luaver_set_default_luajit() {
-	local version="$1"
-	__luaver_exec_command eval "echo \"${version}\" > \"${__luaver_LUAJIT_DEFAULT_FILE}\""
-	__luaver_print "Default version set for luajit: ${version}"
-}
 __luaver_uninstall_luajit() {
 	local version="$1"
 	local luajit_name="LuaJIT-${version}"
@@ -386,10 +358,6 @@ __luaver_uninstall_luajit() {
 	if [ "${version}" = "${current_version}" ]; then
 		__luaver_remove_previous_paths "${__luaver_LUAJIT_DIR}"
 	fi
-}
-__luaver_unset_default_luajit() {
-	__luaver_exec_command rm -- "${__luaver_LUAJIT_DEFAULT_FILE}"
-	__luaver_print "Removed default version for LuaJIT"
 }
 __luaver_use_luajit() {
 	local version="$1"
@@ -412,6 +380,23 @@ __luaver_use_luajit() {
 	__luaver_remove_previous_paths "${__luaver_LUAJIT_DIR}"
 	__luaver_append_path "${__luaver_LUAJIT_DIR}/${version}/bin"
 	__luaver_print "Successfully switched to ${luajit_name}"
+}
+__luaver_available_luarocks() {
+	local url="http://luarocks.github.io/luarocks/releases/"
+        local htmlfilename="index_luarocks.html"
+	__luaver_exec_command cd -- "${__luaver_SRC_DIR}"
+	if [ ! -f "$htmlfilename" ]; then
+		__luaver_download "$url" "$htmlfilename"
+#	else
+#		__luaver_print "index already downloaded"
+	fi
+	if [ ! -f "$htmlfilename" ]; then
+		__luaver_error "Index not found (No such $htmlfilename file)"
+		return 1
+	fi
+	__luaver_print >&2 "Luarocks available :"
+	local pattern='<a href="luarocks-[0-9][^"]*\.tar\.gz">'
+	__luaver_html_to_filenames "$pattern" '"luarocks-[0-9].*\.tar\.gz"' < "$htmlfilename"
 }
 
 # Returns the current luarocks version
@@ -490,11 +475,6 @@ __luaver_list_luarocks() {
 		done
 	fi
 }
-__luaver_set_default_luarocks() {
-	local version="$1"
-	__luaver_exec_command eval "echo \"${version}\" > \"${__luaver_LUAROCKS_DEFAULT_FILE}\""
-	__luaver_print "Default version set for luarocks: ${version}"
-}
 __luaver_uninstall_luarocks() {
 	local version="$1"
 	local luarocks_name="luarocks-${version}"
@@ -505,10 +485,6 @@ __luaver_uninstall_luarocks() {
 	if [ "${version}" = "${current_version}" ]; then
 		__luaver_remove_previous_paths "${__luaver_LUAROCKS_DIR}"
 	fi
-}
-__luaver_unset_default_luarocks() {
-	__luaver_exec_command rm -- "${__luaver_LUAROCKS_DEFAULT_FILE}"
-	__luaver_print "Removed default version for luarocks"
 }
 __luaver_use_luarocks() {
 	local version="$1"
@@ -607,18 +583,18 @@ __luaver_init() {
 	if [ ! -d "$__luaver_LUAROCKS_DIR" ]; then
 		__luaver_exec_command mkdir -- "${__luaver_LUAROCKS_DIR}"
 	fi
-	if [ -f "$__luaver_LUA_DEFAULT_FILE" ]; then
-		local lua_version="$(cat -- "$__luaver_LUA_DEFAULT_FILE")"
-		__luaver_use_lua $lua_version
-	fi
-	if [ -f "$__luaver_LUAJIT_DEFAULT_FILE" ]; then
-		local luajit_version="$(cat -- "$__luaver_LUAJIT_DEFAULT_FILE")"
-		__luaver_use_luajit $luajit_version
-	fi
-	if [ -f "$__luaver_LUAROCKS_DEFAULT_FILE" ]; then
-		local luarocks_version="$(cat -- "$__luaver_LUAROCKS_DEFAULT_FILE")"
-		__luaver_use_luarocks $luarocks_version
-	fi
+#	if [ -f "$__luaver_LUA_DEFAULT_FILE" ]; then
+#		local lua_version="$(cat -- "$__luaver_LUA_DEFAULT_FILE")"
+#		__luaver_use_lua $lua_version
+#	fi
+#	if [ -f "$__luaver_LUAJIT_DEFAULT_FILE" ]; then
+#		local luajit_version="$(cat -- "$__luaver_LUAJIT_DEFAULT_FILE")"
+#		__luaver_use_luajit $luajit_version
+#	fi
+#	if [ -f "$__luaver_LUAROCKS_DEFAULT_FILE" ]; then
+#		local luarocks_version="$(cat -- "$__luaver_LUAROCKS_DEFAULT_FILE")"
+#		__luaver_use_luarocks $luarocks_version
+#	fi
 	__luaver_verbose=1
 	__luaver_exec_command cd -- "${__luaver_present_dir}"
 }
@@ -762,6 +738,7 @@ __luaver_html_to_filenames() {
 		case "${line%%-*}" in
 			(luajit|LuaJIT) ;;
 			(lua) ;;
+			(luarocks) ;;
 			(*)
 				echo >&2 "__luaver_html_to_filenames: continue after ${line%%-*}"
 				continue ;;
@@ -783,8 +760,8 @@ __luaver_usage() {
 	__luaver_print_formatted ""
 	__luaver_print_formatted "   luaver install       <product>=<version>    Installs <product>-<version>"
 	__luaver_print_formatted "   luaver use           <product>=<version>    Switches to <product>-<version>"
-	__luaver_print_formatted "   luaver set-default   <product>=<version>    Sets <version> as default for <product>"
-	__luaver_print_formatted "   luaver unset-default <product>              Unsets the default <product> version"
+#	__luaver_print_formatted "   luaver set-default   <product>=<version>    Sets <version> as default for <product>"
+#	__luaver_print_formatted "   luaver unset-default <product>              Unsets the default <product> version"
 	__luaver_print_formatted "   luaver uninstall     <product>=<version>    Uninstalls <name>-<version>"
 	__luaver_print_formatted "   luaver list          <product>              Lists installed product versions"
 	__luaver_print_formatted "   luaver available     <product>              Lists available product versions"
@@ -845,7 +822,9 @@ luaver() {
 		#version
 	esac
 	case "$cmd" in
-		("install"|use|set-default|unset-default|uninstall|list|available)
+#		("install"|use|set-default|unset-default|uninstall|list|available)
+		(use|set-default|unset-default) echo >&2 "feature removed"; return 1;;
+		('install'|'uninstall'|list|available)
 			local productversion="$1";shift;
 			local product=''
 			local version=''
@@ -863,10 +842,10 @@ luaver() {
 					version=''
 				;;
 			esac
-			case "$cmd" in
-				("set-default")		cmd="set_default"	;;
-				("unset-default")	cmd="unset_default"	;;
-			esac
+#			case "$cmd" in
+#				("set-default")		cmd="set_default"	;;
+#				("unset-default")	cmd="unset_default"	;;
+#			esac
 			"__luaver_${cmd}" "${product}" "$version" "$@"
 		;;
 		("current")			__luaver_current			;;
