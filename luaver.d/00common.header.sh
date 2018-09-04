@@ -41,9 +41,9 @@ __luaver_getdir() {
 		tmp)
 			printf '%s/%s/%s\n'	"$__luaver_LUAVER_DIR" "tmp" "$product"
 		;;
-		default)
-			printf '%s/%s_%s_%s\n'	"$__luaver_LUAVER_DIR" "default" "$product" "${1:-DEFAULT}"
-		;;
+#		default)
+#			printf '%s/%s_%s_%s\n'	"$__luaver_LUAVER_DIR" "default" "$product" "${1:-DEFAULT}"
+#		;;
 		inst)
 			local version="${1:-unknown}";shift
 			printf '%s/%s/%s/%s\n'	"$__luaver_LUAVER_DIR" "inst" "$product" "$version"
@@ -71,9 +71,9 @@ __luaver_LUA_DIR="$(     __luaver_getdir inst lua      .)"                 # Lua
 __luaver_LUAJIT_DIR="$(  __luaver_getdir inst luajit   .)"                 # Luajit   product is installed
 __luaver_LUAROCKS_DIR="$(__luaver_getdir inst luarocks .)"                 # Luarocks product is installed
 
-__luaver_LUA_DEFAULT_FILE="$(     __luaver_getdir default lua     )"       # Lua      default used version
-__luaver_LUAJIT_DEFAULT_FILE="$(  __luaver_getdir default luajit  )"       # Luajit   default used version
-__luaver_LUAROCKS_DEFAULT_FILE="$(__luaver_getdir default luarocks)"       # Luarocks default used version
+#__luaver_LUA_DEFAULT_FILE="$(     __luaver_getdir default lua     )"       # Lua      default used version
+#__luaver_LUAJIT_DEFAULT_FILE="$(  __luaver_getdir default luajit  )"       # Luajit   default used version
+#__luaver_LUAROCKS_DEFAULT_FILE="$(__luaver_getdir default luarocks)"       # Luarocks default used version
 
 
 # .luaver/

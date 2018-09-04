@@ -67,18 +67,18 @@ __luaver_init() {
 	if [ ! -d "$__luaver_LUAROCKS_DIR" ]; then
 		__luaver_exec_command mkdir -- "${__luaver_LUAROCKS_DIR}"
 	fi
-	if [ -f "$__luaver_LUA_DEFAULT_FILE" ]; then
-		local lua_version="$(cat -- "$__luaver_LUA_DEFAULT_FILE")"
-		__luaver_use_lua $lua_version
-	fi
-	if [ -f "$__luaver_LUAJIT_DEFAULT_FILE" ]; then
-		local luajit_version="$(cat -- "$__luaver_LUAJIT_DEFAULT_FILE")"
-		__luaver_use_luajit $luajit_version
-	fi
-	if [ -f "$__luaver_LUAROCKS_DEFAULT_FILE" ]; then
-		local luarocks_version="$(cat -- "$__luaver_LUAROCKS_DEFAULT_FILE")"
-		__luaver_use_luarocks $luarocks_version
-	fi
+#	if [ -f "$__luaver_LUA_DEFAULT_FILE" ]; then
+#		local lua_version="$(cat -- "$__luaver_LUA_DEFAULT_FILE")"
+#		__luaver_use_lua $lua_version
+#	fi
+#	if [ -f "$__luaver_LUAJIT_DEFAULT_FILE" ]; then
+#		local luajit_version="$(cat -- "$__luaver_LUAJIT_DEFAULT_FILE")"
+#		__luaver_use_luajit $luajit_version
+#	fi
+#	if [ -f "$__luaver_LUAROCKS_DEFAULT_FILE" ]; then
+#		local luarocks_version="$(cat -- "$__luaver_LUAROCKS_DEFAULT_FILE")"
+#		__luaver_use_luarocks $luarocks_version
+#	fi
 	__luaver_verbose=1
 	__luaver_exec_command cd -- "${__luaver_present_dir}"
 }
@@ -243,8 +243,8 @@ __luaver_usage() {
 	__luaver_print_formatted ""
 	__luaver_print_formatted "   luaver install       <product>=<version>    Installs <product>-<version>"
 	__luaver_print_formatted "   luaver use           <product>=<version>    Switches to <product>-<version>"
-	__luaver_print_formatted "   luaver set-default   <product>=<version>    Sets <version> as default for <product>"
-	__luaver_print_formatted "   luaver unset-default <product>              Unsets the default <product> version"
+#	__luaver_print_formatted "   luaver set-default   <product>=<version>    Sets <version> as default for <product>"
+#	__luaver_print_formatted "   luaver unset-default <product>              Unsets the default <product> version"
 	__luaver_print_formatted "   luaver uninstall     <product>=<version>    Uninstalls <name>-<version>"
 	__luaver_print_formatted "   luaver list          <product>              Lists installed product versions"
 	__luaver_print_formatted "   luaver available     <product>              Lists available product versions"
@@ -305,7 +305,9 @@ luaver() {
 		#version
 	esac
 	case "$cmd" in
-		("install"|use|set-default|unset-default|uninstall|list|available)
+#		("install"|use|set-default|unset-default|uninstall|list|available)
+		(use|set-default|unset-default) echo >&2 "feature removed"; return 1;;
+		('install'|'uninstall'|list|available)
 			local productversion="$1";shift;
 			local product=''
 			local version=''
@@ -323,10 +325,10 @@ luaver() {
 					version=''
 				;;
 			esac
-			case "$cmd" in
-				("set-default")		cmd="set_default"	;;
-				("unset-default")	cmd="unset_default"	;;
-			esac
+#			case "$cmd" in
+#				("set-default")		cmd="set_default"	;;
+#				("unset-default")	cmd="unset_default"	;;
+#			esac
 			"__luaver_${cmd}" "${product}" "$version" "$@"
 		;;
 		("current")			__luaver_current			;;
